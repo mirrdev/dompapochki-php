@@ -1,5 +1,5 @@
 @php($footer = \App\Http\Models\Settings::getFooter())
-<hr>
+
 <div class="row">
     <div class="col-md-3 col-lg-2">
         <a class="navbar-brand" href="/"></a>

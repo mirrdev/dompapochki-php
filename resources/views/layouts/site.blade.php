@@ -99,7 +99,6 @@
                 <div class="text-center pt-4 pb-1">
                     <h4 class="text-uppercase">{{$message}}</h4>
                 </div>
-                <hr>
             @endif
         @endif
         @include('layouts.site-header-menu')
