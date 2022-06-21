@@ -1,5 +1,6 @@
 body {
     font-family: "Source Sans Pro", sans-serif;
+    background-color: red;
 }
 
 @media (min-width: 1400px) {
@@ -197,7 +198,7 @@ body {
 }
 
 .navbar .navbar-brand {
-    max-width: 150px;
+    width: 150px;
 }
 
 @media only screen and (max-width: 1199px) {
@@ -235,12 +236,12 @@ body {
     border-color: #28a745;
 }
 
-.navbar {
+.navbar .navbar-brand {
     position: sticky;
-    width: 100%;
     z-index: 9;
     top: 0px;
 }
+
 
 /*.cd-add-to-cart {*/
 /*display: inline-block;*/
@@ -1141,10 +1142,10 @@ Main Components
 @media only screen and (max-width: 768px) {
     .phone-btn {
         display: block;
-        position: fixed;
-        bottom: 20px;
-        left: 40px;
-        z-index: 2;
+        position: sticky;
+        bottom: 0px;
+        top: 0;
+        z-index: 3;
         overflow: hidden;
         height: 72px;
         width: 72px;

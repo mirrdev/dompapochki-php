@@ -107,6 +107,69 @@ jQuery(document).ready(function($) {
                 addProductInCartTable($(event.target).parents('.product'));
             });
 
+            const promoEl = document.querySelector('#submitpromo');
+            const infoAlert = document.querySelector('#info-alert');
+            const valueInput = document.querySelector(`input[name="promocode"]`);
+            const checkoutEl = document.querySelector('.checkout>span');
+
+            const renderPromo = (state) => {
+                if (!state.promoCode.isPromoCodeEnabled) {
+                    return;
+                }
+                const infoAlert = document.querySelector('#info-alert');
+                infoAlert.innerHTML = '';
+                if (!state.promoCode.validatedStatus) {
+                    infoAlert.className = 'text-center alert alert-danger';
+                    infoAlert.textContent = 'Промокод не верен!';
+                    valueInput.value = '';
+                    initTable();
+                    return;
+                }
+                if (state.promoCode.validatedStatus) {
+                    infoAlert.className = 'text-center alert alert-success';
+                    infoAlert.textContent = `Промокод принят! - Скидка ${state.promoCode.paramCart.promoPersent} %!`;
+                    const currentSum = localStorage.getItem('countProductInCart');
+                    const sumDiscont = Math.round((currentSum / 100 * state.promoCode.paramCart.promoPersent) * Math.pow(10, 2)) / 100;
+                    checkoutEl.innerHTML = `<span style="text-decoration:line-through;">${currentSum}</span><br>Скидка: ${sumDiscont} <br> К оплате: ${currentSum - sumDiscont}!`;
+                }
+            };
+
+
+
+
+           valueInput.addEventListener('input', function(e) {
+            e.preventDefault();
+            infoAlert.className = "text-center";
+            infoAlert.innerHTML = '';
+           });
+
+           promoEl.addEventListener('click', function(event) {
+            event.preventDefault();
+            const state = {
+                promoCode: {
+                    paramCart,
+                    validatedStatus: false,
+                    isPromoCodeEnabled: Boolean(paramCart.promoShow),
+                }
+            };
+            const currentValue = (valueInput.value).toLowerCase().replace(/[^a-zA-Z0-9]/gi, "");
+
+            if (currentValue == state.promoCode.paramCart.promoValue) {
+                state.promoCode.validatedStatus = true;
+                if(localStorage.getItem("cartItems") !== undefined && localStorage.getItem("cartItems") !== null && localStorage.getItem("cartItems") !== '') {
+                    const items = JSON.parse(localStorage.getItem('cartItems'));
+                    items.forEach((item) => {
+                        item.discont = (item.price / 100 * state.promoCode.paramCart.promoPersent).toFixed(2);
+                        item.total = item.price - (item.price / 100 * state.promoCode.paramCart.promoPersent).toFixed(2);
+                    });
+                // console.dir(items);
+                }
+            }
+            valueInput.focus();
+
+            renderPromo(state);
+           });
+
             cartTable.on('change', '#deliverytype1', function(event){
                 event.preventDefault();
                 showHideFormAddress(false);
@@ -140,7 +203,7 @@ jQuery(document).ready(function($) {
                 if(products.length > 0){
 
                     products = groupProducts(products);
-
+                    console.dir(products);
                     products.forEach(function(element) {
                         addToCartTable(element);
                     });
@@ -271,8 +334,8 @@ jQuery(document).ready(function($) {
         product.find('.form-control-count').text(count);
 
         var productTotPrice = Number(product.find('.price').text().replace('руб', ''));
-
-        //update items count + total price
+        // console.log(productTotPrice);
+        // update items count + total price
         updateCartTotal(productTotPrice, true);
 
         var trigger = {
@@ -286,7 +349,6 @@ jQuery(document).ready(function($) {
             count: 1,
             guid: getRandomArbitrary(100000, 900000)
         };
-
         //add product in local storage
         addProductInStorage(trigger);
         initTable();
@@ -426,7 +488,6 @@ jQuery(document).ready(function($) {
         else {
             result = textVar - priceVar;
         }
-
         cartTotal.text((result).toFixed(2));
         localStorage.setItem("countProductInCart", result);
     }
@@ -437,7 +498,7 @@ jQuery(document).ready(function($) {
     }
 
     function showHideFormAddress(flag) {
-        console.log(paramCart);
+        // console.log(paramCart);
         if(flag){
             addressBox.show();
             $('#address').prop('required', true);
