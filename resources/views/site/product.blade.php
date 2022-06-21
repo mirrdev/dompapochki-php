@@ -37,6 +37,7 @@
 								   data-detail="{{$product['name'.$i]}} - {{$product['detail'.$i]}}"
 								   data-url="{{route('product', ['slug' => $product->slug])}}"
 								   data-img="{{$product->filepath}}"
+								   data-category="{{$product->category_id}}"
 								   data-count=1
 								>добавить в корзину</a>
 
