@@ -6,6 +6,8 @@
 # Photos files
 photos/
 
+.trunk/
+
 # Node artifact files
 node_modules/
 dist/
