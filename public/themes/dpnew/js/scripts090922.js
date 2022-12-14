@@ -9,38 +9,21 @@ jQuery(document).ready(function($) {
     var valueInput = document.querySelector(`input[name="promocode"]`);
     var checkoutEl = document.querySelector('.checkout>span');
 
-    var fullTimeEl = $('#full-time>option').clone();
-    var unitЕimeEl = $('select[name="time"]>option').clone();
-    var selectDate = $('#date');
-    var currentDate = new Date();
-
-    selectDate.on('propertychange change', function (e) {
-      const {
-        target: { value },
-      } = e;
-      const resultTime =
-        currentDate.getDate() === new Date(value).getDate()
-          ? unitЕimeEl
-          : fullTimeEl;
-      $('select[name="time"]').empty().append(resultTime);
-      $('select[name="time"] option:first').prop('selected', true);
-    });
 
     // const phone = $("#phone").mask("+375 (99) 999-99-99");
-    const phone = $('#phone');
+    const phone = $("#phone");
     phone.on('propertychange input', function (e) {
-      const valuePhone = phone.val();
-      const regEx = new RegExp(
-        /^\s*(\+?375|80)((33\d{7})|(29\d{7})|(44\d{7}|)|(25\d{7}))\s*$/
-      );
-      if (regEx.test(valuePhone) && valuePhone.length > 8) {
-        phone.removeClass('is-invalid').addClass('is-valid');
-        $('.btn.btn-success.btn-lg').attr('disabled', false);
-      } else {
-        phone.removeClass('is-valid').addClass('is-invalid');
-        $('.btn.btn-success.btn-lg').attr('disabled', true);
-      }
+            const valuePhone = phone.val();
+            const regEx = new RegExp(/^\s*(\+?375|80)((33\d{7})|(29\d{7})|(44\d{7}|)|(25\d{7}))\s*$/);
+            if (regEx.test(valuePhone) && valuePhone.length > 8) {
+                phone.removeClass('is-invalid').addClass('is-valid');
+                $('.btn.btn-success.btn-lg').attr('disabled', false);
+            } else {
+                phone.removeClass('is-valid').addClass('is-invalid');
+                $('.btn.btn-success.btn-lg').attr('disabled', true);
+            }
     });
+
 
     //product id - you don't need a counter in your real project but you can use your real product id
     var productId = 0;
@@ -198,6 +181,7 @@ jQuery(document).ready(function($) {
     }
 
     function initTable(param = {}) {
+        showHideFormAddress(true);
         const defaultOptions = {
           paramCart,
           immutableCategory: 9,

@@ -22,19 +22,14 @@ class CartController extends Controller
         return view('site/cart', $data);
     }
 
-    public function pay(Request $request)
+public function pay(Request $request)
     {
         if ($request->isMethod('post')) {
 
-            $input = $request->only(['products', 'name', 'phone', 'delivery', 'payment', 'street', 'home', 'home1', 'home2', 'home3', 'flat', 'message', 'time', 'date', 'promocode']);
-            $activeDiscount = false;
-            $enablePromoCode = \App\Http\Models\Settings::getValue('cart_promo_code_show');
-            $deliveryType = (int) $input['delivery'];
+            $input = $request->only(['products', 'name', 'phone', 'delivery', 'payment', 'street', 'home', 'home1', 'home2', 'home3', 'flat', 'message', 'time', 'date']);
 
-            if ($enablePromoCode === '1') {
-                $activeDiscount = (int) $input['delivery'] === 0 ? true : $this->isValidPromoCode($input['promocode']);
-            }
-            list($cart, $price, $cartArray, $urlParams) = $this->getCartAndPrice($input['products'], $activeDiscount, $deliveryType);
+            list($cart, $price, $urlParams) = $this->getCartAndPrice($input['products']);
+
             $deliveryInfo = self::getDeliveryInfo($input);
 
             $order = new Order();
@@ -46,9 +41,8 @@ class CartController extends Controller
             $order->home_podezd = $input['home2'];
             $order->home_etaj = $input['home3'];
             $order->flat = $input['flat'];
-            $input['home3'] . '-' . $input['flat'];
             $order->message = (isset($input['message'])) ? $input['message'] : '-';
-            $order->delivery_time = $input['date'] . "|" . $input['time'];
+            $order->delivery_time = $input['date'] . "," . $input['time'];
             $order->delivery_info = $deliveryInfo;
             $order->cart = $cart;
             $order->price = $price;
@@ -65,7 +59,6 @@ class CartController extends Controller
                 $this->addMessageEmail($order);
                 $this->addMessageCallCenter($urlParams, $request, $order['id']);
                 $this->addMessageTelegram($cart, $deliveryInfo);
-                $this->addMessageCurl($order, $cartArray, $order['id']);
 
                 if($order->status == Order::STATUS_PAY_PROGRESS){
                     return redirect(route('cart-payment', ['hash' => $order->hash]));
@@ -149,17 +142,11 @@ class CartController extends Controller
         }
     }
 
-    private function getCartAndPrice($productsInput, $enableDiscount, $deliveryType)
+    private function getCartAndPrice($productsInput)
     {
-
-        $promoShow = \App\Http\Models\Settings::getValue('cart_promo_code_show');
-        $promoValue = \App\Http\Models\Settings::getValue('cart_promo_code');
-        $promoSum = \App\Http\Models\Settings::getValue('cart_discount_sum');
-        $excludeCategoryId = (int) \App\Http\Models\Settings::getValue('exclude_category_id');
-        $promoPersent = \App\Http\Models\Settings::getValue('cart_discount_amount');
-
         $products = [];
         $productsIds = [];
+
         foreach ($productsInput as $k=>$product)
         {
             $id = str_replace('prod_','', $k);
@@ -174,12 +161,11 @@ class CartController extends Controller
                 ];
             }
         }
+
         $productsItems = Product::whereIn('id', $productsIds)->get();
         $cart = '';
-        $cartArray = [];
         $urlParams = '';
         $price = 0.0;
-        $sumDiscont = 0.0;
         $ink = 0;
 
         foreach ($products as $product)
@@ -194,23 +180,13 @@ class CartController extends Controller
 
                     $typePrice = $item[$priceId];
                     $count = (int) $product['count'];
-                    if ($enableDiscount) {
-                        $discont = $excludeCategoryId === $item->category->id
-                        ? 0
-                        : round(($typePrice * $count === 0 ? 1 : $typePrice * $count) / 100 * $promoPersent, 2);
-                    } else {
-                    $discont = 0;
-                    }
                     $sum = $typePrice * $count;
                     $price = $price + $sum;
-                    $sumDiscont = $sumDiscont + $discont;
                     $category = $item->category->title;
                     $productTitle = $item->title;
                     $detail = $item[$detailId];
                     $typeName = $item[$nameId];
 
-                    $cartCurrent = ['category' => $category, 'productTitle' => $productTitle, 'typeName' => $typeName, 'count' => $count,'typePrice' => $typePrice];
-                    array_push($cartArray, $cartCurrent);
                     $cart .= "<p><b>$category $productTitle</b> ( $count шт ) <b>$typeName $detail </b>  $typePrice руб x $count = $sum руб</p><p>";
 
                     $newType = 100 * $product['type'];
@@ -219,24 +195,12 @@ class CartController extends Controller
                 }
             }
         }
-        if ($enableDiscount) {
-            if ($deliveryType === 0) {
-                $cart .= "<p><b>Скидка: </b>  $sumDiscont руб</p><p>";
-            } else if ($deliveryType === 1 && $price >= $promoSum) {
-                $cart .= "<p><b>Скидка: </b>  $sumDiscont руб</p><p>";
-            }
+
+        if($price > 0){
+            $cart .= "<p><b>ИТОГО: </b>  $price руб</p><p>";
         }
-        if ($price > 0) {
-            if ($enableDiscount){
-                if ($deliveryType === 0) {
-                    $price = $price - $sumDiscont;
-                } else if ($deliveryType === 1 && $price >= $promoSum) {
-                    $price = $price - $sumDiscont;
-                }
-            }
-            $cart .= "<p><b>ИТОГО: </b>  $price  руб</p><p>";
-        }
-        return [$cart, $price, $cartArray, $urlParams];
+
+        return [$cart, $price, $urlParams];
 
     }
     private function getDeliveryInfo($input){
@@ -262,17 +226,6 @@ class CartController extends Controller
         return "ОПЛАТА: " . $money  .  " | " . $deliveryInfo;
 
     }
-
-    private function isValidPromoCode($currentValue) {
-        $promoShow = \App\Http\Models\Settings::getValue('cart_promo_code_show');
-        $promoValue = \App\Http\Models\Settings::getValue('cart_promo_code');
-        $promoSum = \App\Http\Models\Settings::getValue('cart_discount_sum');
-        if (!$promoShow || !$promoValue || !$promoSum) {
-            return false;
-        }
-        return mb_strtolower(preg_replace('/\s+/', '', $currentValue)) === mb_strtolower(preg_replace('/\s+/', '', $promoValue));
-    }
-
     private function addMessageCallCenter($urlParams, $request, $idOrder)
     {
         $url = env('SEND_CALL_CENTER_URL');
@@ -303,34 +256,8 @@ class CartController extends Controller
         $message->data = $url;
         $message->type = SenderQueries::CALLCENTR;
         $message->status = SenderQueries::STATUS_NOT_SEND;
-
         $message->save();
     }
-
-    private function addMessageCurl($order, $cartArray, $idOrder)
-    {
-        // $orderArray = ['idOrder'=>$idOrder, 'name' => $order->name, 'phone' =>  $order->phone, 'cartArray' => $cartArray, 'delivery_type' => $order->delivery_type, 'payment_type' => $order->payment_type, 'delivery_info' => $order->delivery_info, 'price' => $order->price]; //массив данных заказа
-        // $HTMLmessage = '<p>'.$order->name.'</p><p>'.$order->phone.'</p><p>'.$order->delivery_info .'</p><p>'.$order->message.'</p>'.$order->cart; //текстовое сообщение, то которое сейчас попочте отправляется
-        // $NK_order = ['data'=>$orderArray,'html_message'=>$HTMLmessage];   // формируем данные для отправки в контакт центр
-        // $NK_username = 'dompapochkiAPI';
-        // $NK_password = '4ifnsks';
-        // $ch = curl_init();
-        // curl_setopt($ch, CURLOPT_URL,"https://my.virtual-office.by:20443/dom_papochki/mailchecker/api.php?method=addUnconfirmedCall"); // url где находится API
-        // curl_setopt($ch, CURLOPT_USERPWD, $NK_username . ":" . $NK_password);
-        // curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        // curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode($NK_order) );
-        // curl_setopt( $ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-        // curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-        // $NK_result_json = curl_exec($ch);
-        // curl_close($ch);
-        // $NK_result = json_decode($NK_result_json);
-        // if(!$NK_result->result) {
-        //     mail('n.nikolaenko@c-c.by','dom_papochki API error',$NK_result_json);
-        // }  // если ответ не положительный - сообщаем об этом по почте администратору коллцентра и отправляем полученный ответ
-
-    }
-
     private function addMessageTelegram($order, $address)
     {
         $text = '**ЗАКАЗ С САЙТА:**' . PHP_EOL . PHP_EOL;
@@ -345,12 +272,12 @@ class CartController extends Controller
         $text = str_replace('</b>', '' . PHP_EOL, $text);
         $text = str_replace('<span style="color: red">', '', $text);
         $text = str_replace('</span>', '', $text);
+        // $text = urlencode($text);
 
         $message = new SenderQueries();
         $message->data = $text;
         $message->type = SenderQueries::TELEGRAM;
         $message->status = SenderQueries::STATUS_NOT_SEND;
-
         $message->save();
     }
     private function addMessageEmail($order)

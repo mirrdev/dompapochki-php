@@ -22,6 +22,9 @@
         {!! $footer['footer_legal_information'] !!}
     </div>
     <div class="col-md-3 col-lg-2">
-        &copy; {{date('Y', time())}} <p> <a href="https://dompapochki.by">Дом папочки</a></p>
+        &copy; {{date('Y', time())}} 
+        <p class="text-nowrap mb-0"> <a class="text-muted" href="https://dompapochki.by/useragreement">Правовая информация</a></p>
+        <p> <a class="text-muted" href="https://dompapochki.by">Дом папочки</a></p>
+        
     </div>
 </div>

@@ -68,14 +68,17 @@ class Nav extends Model
                 ['parent_id', '=', null]
             ]
         )->get();
-
+       
         foreach ($items as &$item) {
+        
             $item->childs = self::getChilds($item->id);
+             
             foreach ($item->childs as &$child) {
+            
                 $child->childs = self::getChilds($child->id);
             }
         }
-
+     
         return $items;
     }
 

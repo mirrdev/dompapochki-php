@@ -1141,10 +1141,13 @@ Main Components
 @media only screen and (max-width: 768px) {
     .phone-btn {
         display: block;
+        position: fixed;
+        bottom: 20px;
+        left: 40px;
         z-index: 2;
         overflow: hidden;
-        max-height: 72px;
-        max-width: 72px;
+        height: 72px;
+        width: 72px;
         padding: 22px;
         border-radius: 6px;
         -webkit-transition: height .4s .1s, width .4s .1s, box-shadow .3s;

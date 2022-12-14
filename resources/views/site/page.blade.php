@@ -9,12 +9,15 @@
 			{!! $page['text'] !!}
 		</div>
 	</div>
-
-	@if(isset($settings['homepage_delivery_map']))
+	
+    @php($deliveryTitle = \App\Http\Models\Settings::getValue('homepage_delivery_title'))
+    @php($deliveryMap = \App\Http\Models\Settings::getValue('homepage_delivery_map'))
+    
+	@if(isset($deliveryTitle) && $page['id'] == 9)
 		<div class="row">
 			<div class="col-md-12">
-				<h3 class="text-danger">{{$settings['homepage_delivery_title']}}</h3>
-				{!! $settings['homepage_delivery_map'] !!}
+				<h3 class="text-danger">{{$deliveryTitle}}</h3>
+				{!! $deliveryMap !!}
 			</div>
 		</div>
 	@endif
